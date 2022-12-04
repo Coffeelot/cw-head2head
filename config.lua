@@ -1,6 +1,6 @@
 Config = {}
 Config.Debug = false
-Config.SoloRace = true -- use for debug
+Config.SoloRace = false -- use for debug
 
 Config.MinimumDistance = 1000 -- This is the minimum distance away a randomly selected waypoint can be
 Config.MaximumDistance = 5000 -- This is the minimum distance away a randomly selected waypoint can be

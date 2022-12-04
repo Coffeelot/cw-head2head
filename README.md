@@ -1,11 +1,10 @@
 # Head 2 Head racing 👥
-Simple and easy 1v1 racing. Challange friends and foes without need for any ids, names or setting up a track. The scripts adds an option in qb-radialmenu that opens up new venues for racing. You can either set up for free, or use the pre-set buy-ins (can be changed in config). 
+Simple and easy 1v1 racing for QBCore. Challange friends and foes without need for any ids, names or setting up a track. The scripts adds an option in qb-radialmenu that opens up new venues for racing. You can either set up for free, or use the pre-set buy-ins (can be changed in config). 
 
 This is how it works:
 You open radialmenu, pick the Head 2 Head option and then choose to setup using either no money or a buy in. Everyone close to you, and in a driver seat, will get an invite. First person to accept takes on the challange. A 5 second countdown starts, but no one is locked in place or whatever. This is all about impromptu racing, and race etiquettue. You'll both get a waypoint randomly chosen for you. First there wins. Easy as. The money is taken from the players upon race starting and given to winner when the winner reaches the goal.
 
 Some "limitations" to the positioning system: It check's linear distance to the goal so it might be a bit off sometimes. Also if you get to far apart (outside each others render boxes) we can't track your distance. The postionign will say "-/2" when this is the case. But honestly, if you're taking different routes etc, isn't it more fun to not know? 😏
-
 
 # Preview 📽
 Coming soon
