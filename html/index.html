@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>By Coffeelot and Wuggie</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+    <body>
+        <div class="container">
+            <div class="countdown-container">
+                <div class="countdown-holder">
+                    <span id="countdown-number"></span>
+                    <span id="countdown-text"></span>
+                </div>
+            </div>
+            <div class="ui">             
+                <div class="race">
+                    <div class="blocks-container">
+                        <div id="race-ghosted-span"> <span id="race-ghosted-value">👻</span></div>
+                        <div class="blocks">
+                            <div class="block">
+                                <span class="hud-text split big"><span class="leftAligned">POS:</span><span id="race-position">1 / 1</span></span>
+
+                                <!-- <span id="racer-positions">
+                                    <span id="racer-position-number"> 1 : </span><span id="racer-position-name"> Potato </span> 
+                                </span> -->
+                            <div class="block">
+                                <span class="hud-text split"><span class='leftAligned'>TIME:</span> <span id="race-time">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="./script.js"></script>
+</html>
