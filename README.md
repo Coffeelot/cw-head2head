@@ -7,7 +7,6 @@ You open radialmenu, pick the Head 2 Head option and then choose to setup using 
 Some "limitations" to the positioning system: It check's linear distance to the goal so it might be a bit off sometimes. Also if you get to far apart (outside each others render boxes) we can't track your distance. The postionign will say "-/2" when this is the case. But honestly, if you're taking different routes etc, isn't it more fun to not know? 😏
 
 # Preview 📽
-Coming soon
 [![YOUTUBE VIDEO](http://img.youtube.com/vi/n4FP3FsSSQI/0.jpg)](https://youtu.be/n4FP3FsSSQI)
 
 
