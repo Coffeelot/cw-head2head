@@ -10,6 +10,7 @@ Config.InviteDistance = 20 -- Max distance away to get invites
 Config.MoneyType = 'cash' -- Type of money used
 Config.BuyIns = { 100, 1000, 5000 } -- The pre selected buy ins
 Config.InviteTimer = 10000 -- Time until invite is canceled for reciever, in ms
+Config.FlashUnderglow = true -- Set to false if you dont want underglow to flash when challenging or accepting
 
 -- All possible locations you can be sent to. Add more if you want. use /impdebug to see them on the map
 Config.Finishes = {

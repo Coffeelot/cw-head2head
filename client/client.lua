@@ -170,20 +170,28 @@ local function handleHighBeams()
     local PlayerPed = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(PlayerPed, false)
     SetVehicleFullbeam(vehicle, true)
-    SetVehicleNeonLightEnabled(vehicle, 2 , false)
+    if Config.FlashUnderglow then
+        SetVehicleNeonLightEnabled(vehicle, 2 , false)
+    end
     Wait(400)
     SetVehicleFullbeam(vehicle, false)
-    SetVehicleNeonLightEnabled(vehicle, 2 , true)
-    SetVehicleNeonLightEnabled(vehicle, 0, false)
-    SetVehicleNeonLightEnabled(vehicle, 1 , false)
+    if Config.FlashUnderglow then
+        SetVehicleNeonLightEnabled(vehicle, 2 , true)
+        SetVehicleNeonLightEnabled(vehicle, 0, false)
+        SetVehicleNeonLightEnabled(vehicle, 1 , false)
+    end
     Wait(400)
     SetVehicleFullbeam(vehicle, true)
-    SetVehicleNeonLightEnabled(vehicle, 0, true)
-    SetVehicleNeonLightEnabled(vehicle, 1 , true)
-    SetVehicleNeonLightEnabled(vehicle, 3 , false)
+    if Config.FlashUnderglow then
+        SetVehicleNeonLightEnabled(vehicle, 0, true)
+        SetVehicleNeonLightEnabled(vehicle, 1 , true)
+        SetVehicleNeonLightEnabled(vehicle, 3 , false)
+    end
     Wait(400)
     SetVehicleFullbeam(vehicle, false)
-    SetVehicleNeonLightEnabled(vehicle, 3 , true)
+    if Config.FlashUnderglow then
+        SetVehicleNeonLightEnabled(vehicle, 3 , true)
+    end
 
 end
 
