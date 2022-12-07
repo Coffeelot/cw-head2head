@@ -8,6 +8,9 @@ Some "limitations" to the positioning system: It check's linear distance to the 
 
 # Preview 📽
 Coming soon
+[![YOUTUBE VIDEO](http://img.youtube.com/vi/n4FP3FsSSQI/0.jpg)](https://youtu.be/n4FP3FsSSQI)
+
+
 
 # Developed by Coffeelot and Wuggie
 [More scripts by us](https://github.com/stars/Coffeelot/lists/cw-scripts)  👈

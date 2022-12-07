@@ -17,8 +17,8 @@ local Translations = {
     },
     menu = {
         title = "Head 2 Head",
-        setup = "Setup Head 2 Head",
-        join = "Join Head 2 Head"
+        setup = "Setup",
+        join = "Join"
     }
 }
 Lang = Locale:new({phrases = Translations, warnOnMissing = true})
