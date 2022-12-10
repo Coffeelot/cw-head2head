@@ -179,7 +179,7 @@ local function handleHighBeams()
     local vehicle = GetVehiclePedIsIn(PlayerPed, false)
     SetVehicleFullbeam(vehicle, true)
     local FlashUnderglow = Config.FlashUnderglow and allNeonAreOn(vehicle)
-    if Config.FlashUnderglow then
+    if FlashUnderglow then
         SetVehicleNeonLightEnabled(vehicle, 2 , false)
     end
     Wait(400)
@@ -201,7 +201,6 @@ local function handleHighBeams()
     if FlashUnderglow then
         SetVehicleNeonLightEnabled(vehicle, 3 , true)
     end
-
 end
 
 RegisterNetEvent('cw-head2head:client:joinRace', function()
