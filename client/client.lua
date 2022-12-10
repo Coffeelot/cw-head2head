@@ -166,30 +166,39 @@ RegisterNetEvent('cw-head2head:client:checkDistance', function(raceId, coords, a
     end
 end)
 
+local function allNeonAreOn(vehicle)
+    if IsVehicleNeonLightEnabled(vehicle, 1) and IsVehicleNeonLightEnabled(vehicle, 2) and IsVehicleNeonLightEnabled(vehicle, 3) and IsVehicleNeonLightEnabled(vehicle, 0) then
+        return true
+    else
+        return false
+    end
+end
+
 local function handleHighBeams()
     local PlayerPed = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(PlayerPed, false)
     SetVehicleFullbeam(vehicle, true)
+    local FlashUnderglow = Config.FlashUnderglow and allNeonAreOn(vehicle)
     if Config.FlashUnderglow then
         SetVehicleNeonLightEnabled(vehicle, 2 , false)
     end
     Wait(400)
     SetVehicleFullbeam(vehicle, false)
-    if Config.FlashUnderglow then
+    if FlashUnderglow then
         SetVehicleNeonLightEnabled(vehicle, 2 , true)
         SetVehicleNeonLightEnabled(vehicle, 0, false)
         SetVehicleNeonLightEnabled(vehicle, 1 , false)
     end
     Wait(400)
     SetVehicleFullbeam(vehicle, true)
-    if Config.FlashUnderglow then
+    if FlashUnderglow then
         SetVehicleNeonLightEnabled(vehicle, 0, true)
         SetVehicleNeonLightEnabled(vehicle, 1 , true)
         SetVehicleNeonLightEnabled(vehicle, 3 , false)
     end
     Wait(400)
     SetVehicleFullbeam(vehicle, false)
-    if Config.FlashUnderglow then
+    if FlashUnderglow then
         SetVehicleNeonLightEnabled(vehicle, 3 , true)
     end
 
