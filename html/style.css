@@ -228,6 +228,9 @@ body {
     font-size: var(--big-font-size);
 }
 
+.outrun-timer {
+    display: none;
+}
 #race-ghosted-value{
     /* display: none; */
     

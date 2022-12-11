@@ -46,27 +46,32 @@ local function getFinish(startCoords)
     end
 end
 
-RegisterNetEvent('cw-head2head:server:setupRace', function(citizenId, racerName, startCoords, amount)
+RegisterNetEvent('cw-head2head:server:setupRace', function(citizenId, racerName, startCoords, amount, type)
     local raceId = generateRaceId()
     if useDebug then
         print('setting up', citizenId, racerName, startCoords, amount)
     end
-    local finishCoords = getFinish(startCoords)
+
+    local finishCoords = 'none'
+    if type == 'head2head' then
+        finishCoords = getFinish(startCoords)
+    end
     if finishCoords then
         activeRaces[raceId] = {
             raceId = raceId,
+            type = type,
             racers = { { citizenId = citizenId, racerName = racerName, source = source } },
             startCoords = startCoords,
             finishCoords = finishCoords,
             winner = nil,
             started = false,
             finished = false,
-            amount = amount
+            amount = amount,
         }
         if Config.SoloRace then
             TriggerEvent('cw-head2head:server:startRace', raceId) -- Used for debugging
         else
-            TriggerClientEvent('cw-head2head:client:checkDistance', -1, raceId, startCoords, amount, citizenId)
+            TriggerClientEvent('cw-'..type..':client:checkDistance', -1, raceId, startCoords, amount, citizenId)
         end
     else
         TriggerClientEvent('QBCore:Notify', source, Lang:t("error.failed_to_find_a_waypoint"), "error")
@@ -93,7 +98,11 @@ RegisterNetEvent('cw-head2head:server:startRace', function(raceId)
                 end
                 Player.Functions.RemoveMoney(Config.MoneyType, activeRaces[raceId].amount)
             end
-            TriggerClientEvent('cw-head2head:client:raceCountdown', Player.PlayerData.source, activeRaces[raceId])
+            if activeRaces[raceId].type == 'head2head' then
+                TriggerClientEvent('cw-head2head:client:raceCountdown', Player.PlayerData.source, activeRaces[raceId])
+            else
+                TriggerClientEvent('cw-outrun:client:raceCountdown', Player.PlayerData.source, activeRaces[raceId])
+            end
         end
     end
 end)
@@ -112,10 +121,26 @@ RegisterNetEvent('cw-head2head:server:joinRace', function(citizenId, racerName, 
     elseif activeRaces[raceId].amount > 0 and Player.PlayerData.money[Config.MoneyType] < activeRaces[raceId].amount then
         TriggerClientEvent('QBCore:Notify', source, Lang:t("error.not_enough_money"), "error")        
     else
+        if useDebug then
+            print('type: ', activeRaces[raceId].type)
+        end
         activeRaces[raceId].racers[#activeRaces[raceId].racers+1] = { citizenId = citizenId, source = source, racerName = racerName }
         if #activeRaces[raceId].racers > 1 then
             TriggerEvent('cw-head2head:server:startRace', raceId)
         end
+    end
+end)
+
+RegisterNetEvent('cw-head2head:server:outrunWinner', function(raceId, citizenId, opponentSource, finishTime)
+    if useDebug then
+        print('finishing outrun with ', citizenId, 'as the winner. race id:', raceId)
+        print('Loser ', opponentSource)
+    end
+    TriggerClientEvent('cw-outrun:client:notifyFinish', source, Lang:t('info.winner'))
+    TriggerClientEvent('cw-outrun:client:notifyFinish', opponentSource, Lang:t('info.loser'))
+    if activeRaces[raceId].amount > 0 then
+        local Player = QBCore.Functions.GetPlayerByCitizenId(citizenId)
+        Player.Functions.AddMoney(Config.MoneyType, activeRaces[raceId].amount*2)
     end
 end)
 

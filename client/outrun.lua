@@ -4,16 +4,17 @@ local Countdown = 5
 local currentRace = {}
 local startTime = 0
 local maxDistance = 20
-local flareStartDistance = 100
 local hasFinished = false
 local FinishedUITimeout = false
-local ghosted = false
 local currentTime = 0
 local inviteRaceId = nil
 local useDebug = Config.Debug
 local opponent = nil
 local opponentId = nil
-local finishBlip = nil
+local role = nil
+local winTimer = nil
+local distance = nil
+local marker = nil
 
 local function dump(o)
    if type(o) == 'table' then
@@ -28,6 +29,24 @@ local function dump(o)
    end
 end
 
+RegisterNetEvent('cw-outrun:client:notifyFinish', function(text)
+    hasFinished = true
+    role = nil
+    winTimer = nil
+    distance = nil
+    currentRace = nil
+    RemoveBlip(marker)
+    marker = nil
+    Countdown = 5
+    SendNUIMessage({
+        action = "Finish",
+        data = {
+            value = text
+        },
+        active = false
+    })
+end)
+
 local function updateCountdown(value)
     SendNUIMessage({
         action = "Countdown",
@@ -37,16 +56,6 @@ local function updateCountdown(value)
         active = true
     })
 end
-
-RegisterNetEvent('cw-head2head:client:notifyFinish', function(text)
-    SendNUIMessage({
-        action = "Finish",
-        data = {
-            value = text
-        },
-        active = true
-    })
-end)
 
 local function getOpponent()
     local ply = GetPlayerPed(-1)
@@ -60,22 +69,27 @@ local function getOpponent()
     end
 end
 
-local function getPosition()
+local function distanceToOpponent()
     local ply = GetPlayerPed(-1)
     local plyCoords = GetEntityCoords(ply, 0)    
-    local plyDistance = #(plyCoords.xy-currentRace.finishCoords.xy)
 
     local opponentId = GetPlayerFromServerId(opponentId)
     local target = GetPlayerPed(opponentId)
+    
     local opponentCoords = GetEntityCoords(target, 0)
-    local opponentDistance = #(opponentCoords.xy-currentRace.finishCoords.xy)
+    local distance = #(opponentCoords.xy-plyCoords.xy)
 
-    if plyDistance < opponentDistance then
-        return 1
-    elseif plyDistance == opponentDistance then
-        return '-'
+    if distance == 0 then
+        SetBlipSprite(marker, 488)
+        SetBlipColour(marker, 1)
+    else
+        RemoveBlip(marker)
+        marker = AddBlipForCoord(opponentCoords)
+        SetBlipSprite(marker, 488)
+        SetBlipColour(marker, 2)
+
     end
-    return 2
+    return distance
 end
 
 local function setupRaceUI()
@@ -83,6 +97,14 @@ local function setupRaceUI()
         while true do
             if not hasFinished then
                 currentTime = GetTimeDifference(GetCloudTimeAsInt(), startTime)
+                local timeToWin = Config.Outrun.TimeToOutrun
+                if role == 'cat' then
+                    timeToWin = Config.Outrun.TimeToCatch
+                end
+                local time = 0
+                if winTimer ~= nil then
+                    time = GetTimeDifference(GetCloudTimeAsInt(), winTimer)
+                end
                 SendNUIMessage({
                     action = "Update",
                     type = "race",
@@ -90,7 +112,11 @@ local function setupRaceUI()
                         Time = currentTime,
                         Ghosted = ghosted,
                         Started = currentRace.started,
-                        Position = getPosition()
+                        Type = currentRace.type,
+                        Role = role,
+                        OutrunTimer = time,
+                        OutrunTimeToWin = timeToWin,
+                        Distance = distance,
                     },
                     active = true
                 })
@@ -141,17 +167,17 @@ local function isInDriverSeat()
       end
 end
 
-RegisterNetEvent('cw-head2head:client:checkDistance', function(raceId, coords, amount, host)
+RegisterNetEvent('cw-outrun:client:checkDistance', function(raceId, coords, amount, host)
     local citizenId = QBCore.Functions.GetPlayerData().citizenid
     if useDebug then
-        print('checking if close to race', raceId, citizenId, host)
+        print('checking if close to outrun race', raceId, citizenId, host)
     end
     if host ~= citizenId and playerIsWithinDistance(coords) and isInDriverSeat() then
         if useDebug then
             print('can join')
         end
         inviteRaceId = raceId
-        local text = Lang:t('info.you_got_an_invite')
+        local text = Lang:t('info.you_got_an_invite_outrun')
         if amount and amount > 0 then
             text = text..' ($'..amount..')'
         end
@@ -203,7 +229,7 @@ local function handleHighBeams()
     end
 end
 
-RegisterNetEvent('cw-head2head:client:joinRace', function()
+RegisterNetEvent('cw-outrun:client:joinRace', function()
     if useDebug then
         print('attempting to join', inviteRaceId)
     end
@@ -212,13 +238,14 @@ RegisterNetEvent('cw-head2head:client:joinRace', function()
         local racerName = ''
         TriggerServerEvent('cw-head2head:server:joinRace', citizenId, racerName, inviteRaceId)
         handleHighBeams()
+        role = 'cat'
     else
         QBCore.Functions.Notify(Lang:t('error.you_have_no_invites'), 'error')
     end
 end)
 
 local defaultLightsState = 0
-RegisterNetEvent('cw-head2head:client:setupRace', function(data)
+RegisterNetEvent('cw-outrun:client:setupRace', function(data)
     if useDebug then
         print('setting up race: $'..data.value)
     end
@@ -229,88 +256,23 @@ RegisterNetEvent('cw-head2head:client:setupRace', function(data)
     if useDebug then
         print(citizenId, dump(startCoords))
     end
-    TriggerServerEvent('cw-head2head:server:setupRace', citizenId, racerName, startCoords, amount, 'head2head')
+    TriggerServerEvent('cw-head2head:server:setupRace', citizenId, racerName, startCoords, amount, 'outrun')
     handleHighBeams()
+    role = 'mouse'
 end)
 
-local function showNonLoopParticle(dict, particleName, coords, scale, time)
-    while not HasNamedPtfxAssetLoaded(dict) do
-        RequestNamedPtfxAsset(dict)
-        Wait(0)
-    end
-
-    UseParticleFxAssetNextCall(dict)
-
-    local particleHandle = StartParticleFxLoopedAtCoord(particleName, coords.x, coords.y, coords.z-0.5, 0.0, 0.0, 0.0,
-    scale, false, false, false)
-    SetParticleFxLoopedColour(particleHandle,0.0,0.0,1.0)
-    return particleHandle
-end
-
-local finishParticle
-local finishEntity
-
-local function DeletePile()
-    if DoesEntityExist(finishEntity) then
-        DeleteEntity(finishEntity)
-        finishEntity = nil
-    end
-end
-
-local function handleFlare ()
-    -- QBCore.Functions.Notify('Lighting '..checkpoint, 'success')
-
-    local Size = 1.0
-    local finishParticle = showNonLoopParticle('core', 'exp_grd_flare',
-        currentRace.finishCoords, Size)
-
-    SetTimeout(Config.FlareTime, function()
-        StopParticleFxLooped(finishParticle, false)
-        particleHandle = nil
-        DeletePile()
-    end)
-end
-
-
-
-local function LoadModel(model)
-    while not HasModelLoaded(model) do
-        RequestModel(model)
-        Wait(10)
-    end
-end
-
-local function CreatePile()
-    ClearAreaOfObjects(currentRace.finishCoords.x, currentRace.finishCoords.y, currentRace.finishCoords.z, 50.0, 0)
-    LoadModel(Config.FinishModel)
-
-    local Obj = CreateObject(Config.FinishModel, currentRace.finishCoords.x, currentRace.finishCoords.y, currentRace.finishCoords.z, 0, 0, 0) -- CHANGE ONE OF THESE TO MAKE NETWORKED???
-    PlaceObjectOnGroundProperly(Obj)
-    -- FreezeEntityPosition(Obj, 1)
-    SetEntityAsMissionEntity(Obj, 1, 1)
-
-    return Obj
-end
-
-
-local function DoPilePfx()
-    handleFlare()
-    finishEntity = CreatePile()
-end
-
-RegisterNetEvent('cw-head2head:client:raceCountdown', function(race)
+RegisterNetEvent('cw-outrun:client:raceCountdown', function(race)
     QBCore.Functions.TriggerCallback('cw-head2head:server:getPlayers', function(players)
         Players = players
         currentRace = race
+        winTimer = nil
         hasFinished = false
         if useDebug then
             print('Starting Countdown', dump(race))
         end
         if currentRace.raceId ~= nil then
-            finishBlip = AddBlipForCoord(currentRace.finishCoords)
             setupRaceUI()
             opponent = getOpponent()
-            SetNewWaypoint(currentRace.finishCoords.x, currentRace.finishCoords.y)
             while Countdown ~= 0 do
                 if currentRace ~= nil then
                     if useDebug then
@@ -339,29 +301,47 @@ end)
 
 local function finishRace()
     currentRace = nil
-    RemoveBlip(finishBlip)
-    finishBlip = nil
+end
+
+local function handleMouse()
+    distance = distanceToOpponent()
+    if distance == 0 then
+        if winTimer == nil then
+            winTimer = GetCloudTimeAsInt()            
+        end
+        if not hasFinished and Config.Outrun.TimeToOutrun <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
+            TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
+        end
+    else
+        winTimer = nil
+    end
+end
+
+local function handleCat()
+    distance = distanceToOpponent()
+    if distance <= Config.Outrun.CatchDistance and distance ~= 0 then
+        if winTimer == nil then
+            winTimer = GetCloudTimeAsInt()            
+        end
+        if not hasFinished and Config.Outrun.TimeToCatch <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
+            TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
+        end
+    else
+        winTimer = nil
+    end
 end
 
 CreateThread(function()
     while true do
-
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
 
         if currentRace ~= nil then
             if currentRace.started and not currentRace.finished then
-                local distanceToFinish = #(pos - currentRace.finishCoords)
-                if finishEntity == nil and not hasFinished and distanceToFinish < flareStartDistance then
-                    DoPilePfx()
-                end
-                if not hasFinished and distanceToFinish < maxDistance then
-                    PlaySound(-1, "SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", 0, 0, 1)
-                    TriggerServerEvent('cw-head2head:server:finishRacer', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
-                    hasFinished = true
-                    Countdown = 5
-                    Wait(1000)
-                    finishRace()
+                if role == 'mouse' then
+                    handleMouse()
+                else
+                    handleCat()
                 end
             end
         else
@@ -375,19 +355,19 @@ local markers = {}
 
 local items = {
     {
-        id = 'head2headJoin',
+        id = 'outrunJoin',
         title = Lang:t('menu.join'),
         icon = 'check',
         type = 'client',
-        event = 'cw-head2head:client:joinRace',
+        event = 'cw-outrun:client:joinRace',
         shouldClose = true
     },
     {
-        id = 'head2headFree',
+        id = 'outrunFree',
         title = Lang:t('menu.setup'),
         icon = 'comments',
         type = 'client',
-        event = 'cw-head2head:client:setupRace',
+        event = 'cw-outrun:client:setupRace',
         value = 0,
         shouldClose = true
     }
@@ -395,11 +375,11 @@ local items = {
 
 for i, value in pairs(Config.BuyIns) do
     items[#items+1] = {
-        id = 'head2head'..value,
+        id = 'outrun'..value,
         title = Lang:t('menu.setup')..' ($'..value..')',
         icon = 'comments-dollar',
         type = 'client',
-        event = 'cw-head2head:client:setupRace',
+        event = 'cw-outrun:client:setupRace',
         value = value,
         shouldClose = true
     }
@@ -409,8 +389,8 @@ local radialMenu = nil
 
 local function addRadialMenu()
     radialMenu = exports['qb-radialmenu']:AddOption({
-        id = 'head2head',
-        title = Lang:t('menu.title'),
+        id = 'outrun',
+        title = Lang:t('menu.title_outrun'),
         icon = 'flag-checkered',
         type = 'client',
         items = items
@@ -443,32 +423,17 @@ Citizen.CreateThread(function()
 	end
 end)
 
-RegisterNetEvent('cw-head2head:client:debugMap', function()
-    if #markers > 0 then
-        print('removing markers')
-        for i, marker in pairs(markers) do
-            RemoveBlip(marker)
-        end
-        markers = {}
-    else
-        print('adding markers')
-        for i, coord in pairs(Config.Finishes) do
-            markers[#markers+1] = AddBlipForCoord(coord.x, coord.y, coord.z)
-        end    
-    end
-end)
-
-RegisterNetEvent('cw-head2head:client:toggleDebug', function(debug)
+RegisterNetEvent('cw-outrun:client:toggleDebug', function(debug)
    print('Setting debug to',debug)
    useDebug = debug
 end)
 
 AddEventHandler('onResourceStop', function (resource)
-   if resource ~= GetCurrentResourceName() then return end
-   if DoesEntityExist(finishEntity) then
-        print('deleting', finishEntity)
-        DeleteEntity(finishEntity)
-    end
-    exports['qb-radialmenu']:RemoveOption(radialMenu)
-    radialMenu = nil
-end)
+    if resource ~= GetCurrentResourceName() then return end
+    if DoesEntityExist(finishEntity) then
+         print('deleting', finishEntity)
+         DeleteEntity(finishEntity)
+     end
+     exports['qb-radialmenu']:RemoveOption(radialMenu)
+     radialMenu = nil
+ end)

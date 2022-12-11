@@ -13,14 +13,14 @@ local Translations = {
     info = {
         loser = "Better luck next time",
         winner = "Winner!",
-        you_got_an_invite = "You've been challanged to a Head 2 Head"
+        you_got_an_invite = "You've been challenged to a Head 2 Head",
+        you_got_an_invite_outrun = "You've been challenged to an Outrun race"
     },
     menu = {
         title = "Head 2 Head",
+        title_outrun = "Outrun",
         setup = "Setup",
         join = "Join"
     }
 }
 Lang = Locale:new({phrases = Translations, warnOnMissing = true})
-
--- Maintained by Coffeelot and Wuggie

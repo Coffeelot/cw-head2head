@@ -27,10 +27,11 @@ Some "limitations" to the positioning system: It check's linear distance to the 
 - Betting
 - Built in high beam flashing cause it looks cool
 - Position tracking
+- Two modes: Head2Head (random location. Race there) and Outrun (challenger is mouse, the one who accepts is the cat. Let the chase begin)
 
 # Planned features 🤔
 - [Racing App](https://github.com/Coffeelot/cw-racingapp) implementation (like needing a fob to use and menus being available from fob)
-- Outrun races, or cat and mouse races (like NFSU2, or NFSCarbons mountain races)
+- 
 - Ghosting, like in our [Racing App](https://github.com/Coffeelot/cw-racingapp). Maybe.
 
 # Not happening ⛔

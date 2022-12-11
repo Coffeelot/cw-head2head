@@ -39,7 +39,24 @@ function UpdateUI(type, data) {
                 RaceActive = true;
                 $(".race").fadeIn(300);
             }
-            $("#race-position").html(data.data.Position + ' / ' + 2);
+            if (data.data.Type === 'outrun') {
+                if (data.data.Role === 'mouse') {
+                    $("#race-position").html('🐭');
+                } else {
+                    $("#race-position").html('🐱');
+                }
+                $(".outrun-timer").show()
+                $("#outrun-time").html(data.data.OutrunTimer + ' / ' + data.data.OutrunTimeToWin);
+                if(data.data.Distance === 0 && data.data.Role === 'mouse') {
+                    $("#outrun-distance").html('WINNING');
+                } else if (data.data.Distance === 0 && data.data.Role === 'cat') {
+                    $("#outrun-distance").html('LOSING');
+                } else {
+                    $("#outrun-distance").html(Math.round(data.data.Distance));
+                }
+            } else {
+                $("#race-position").html(data.data.Position + ' / ' + 2);
+            }
             if(data.data.Started) {
                 $("#race-time").html(secondsTimeSpanToHMS(data.data.Time));
             }
@@ -53,6 +70,7 @@ function UpdateUI(type, data) {
             }
         } else {
             RaceActive = false;
+            $(".outrun-timer").fadeOut(200)
             $(".race").fadeOut(300);
         }
     }

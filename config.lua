@@ -1,6 +1,6 @@
 Config = {}
 Config.Debug = false
-Config.SoloRace = false -- use for debug
+Config.SoloRace = false -- use for debug, if this was pushed as true, please @coffeelot in the discord and call him an idiot
 
 Config.MinimumDistance = 1000 -- This is the minimum distance away a randomly selected waypoint can be
 Config.MaximumDistance = 5000 -- This is the minimum distance away a randomly selected waypoint can be
@@ -11,6 +11,13 @@ Config.MoneyType = 'cash' -- Type of money used
 Config.BuyIns = { 100, 1000, 5000 } -- The pre selected buy ins
 Config.InviteTimer = 10000 -- Time until invite is canceled for reciever, in ms
 Config.FlashUnderglow = true -- Set to false if you dont want underglow to flash when challenging or accepting
+
+Config.Outrun = {
+    FarDistance = 1000,
+    CatchDistance = 20,
+    TimeToOutrun = 10,
+    TimeToCatch = 10,
+}
 
 -- All possible locations you can be sent to. Add more if you want. use /impdebug to see them on the map
 Config.Finishes = {
