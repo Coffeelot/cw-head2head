@@ -415,28 +415,47 @@ local function removeRadialMenu()
     radialMenu = nil
 end
 
+local function isJobValidated()
+    if Config.BlackListedJobs then
+        local Player = QBCore.Functions.GetPlayerData()
+        local JobInBlackList = Config.BlackListedJobs[Player.job.name]
+        if JobInBlackList then
+            if JobInBlackList.onlyDuty then
+                if Player.job.onduty then
+                    return false
+                else
+                    return true
+                end
+            else
+                return false
+            end
+        else
+            return true
+        end
+    end
+    return true
+end
+
 Citizen.CreateThread(function()
 	local isInCar = false
 	while true do
-        Citizen.Wait(0)					-- mandatory wait
+        Citizen.Wait(1000)					-- mandatory wait
         local ped = GetPlayerPed(-1)	-- get local ped
 
-        if PlayerJob.name == 'police' then
-            Wait(1000)
-        else
-            if IsPedInAnyVehicle(ped, false) then
+        if IsPedInAnyVehicle(ped, false) then
+            if isJobValidated() then
                 local veh = GetVehiclePedIsIn(ped, false)
                 if isInCar == false then
                     isInCar = true
                     addRadialMenu()
                 end
-            else
-                if isInCar == true then
-                    isInCar = false
-                    removeRadialMenu()
-                end
             end
-        end
+        else
+            if isInCar == true then
+                isInCar = false
+                removeRadialMenu()
+            end
+        end 
     end
 end)
 
