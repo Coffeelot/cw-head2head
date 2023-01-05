@@ -323,6 +323,7 @@ local function handleMouse()
             winTimer = GetCloudTimeAsInt()            
         end
         if not hasFinished and Config.Outrun.TimeToOutrun <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
+            hasFinished = true
             TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
         end
     else
