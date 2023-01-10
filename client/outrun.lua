@@ -43,7 +43,6 @@ RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
 end)
 
 RegisterNetEvent('cw-outrun:client:notifyFinish', function(text)
-    hasFinished = true
     role = nil
     winTimer = nil
     distance = nil
@@ -338,6 +337,7 @@ local function handleCat()
             winTimer = GetCloudTimeAsInt()            
         end
         if not hasFinished and Config.Outrun.TimeToCatch <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
+            hasFinished = true
             TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
         end
     else
