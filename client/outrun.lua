@@ -43,6 +43,7 @@ RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
 end)
 
 RegisterNetEvent('cw-outrun:client:notifyFinish', function(text)
+    hasFinished = true
     role = nil
     winTimer = nil
     distance = nil
