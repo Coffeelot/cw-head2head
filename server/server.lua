@@ -14,7 +14,7 @@ function dump(o)
    end
 end
 
-local activeRaces = {} 
+local activeRaces = {}
 
 local race = {
     racers = { nil, nil},
@@ -46,7 +46,7 @@ local function getFinish(startCoords)
     end
 end
 
-RegisterNetEvent('cw-head2head:server:setupRace', function(citizenId, racerName, startCoords, amount, type)
+RegisterNetEvent('cw-head2head:server:setupRace', function(citizenId, racerName, startCoords, amount, type, waypoint)
     local raceId = generateRaceId()
     if useDebug then
         print('setting up', citizenId, racerName, startCoords, amount)
@@ -54,7 +54,11 @@ RegisterNetEvent('cw-head2head:server:setupRace', function(citizenId, racerName,
 
     local finishCoords = 'none'
     if type == 'head2head' then
-        finishCoords = getFinish(startCoords)
+        if waypoint == nil then
+            finishCoords = getFinish(startCoords)
+        else
+            finishCoords = waypoint
+        end
     end
     if finishCoords then
         activeRaces[raceId] = {
@@ -96,7 +100,7 @@ RegisterNetEvent('cw-head2head:server:startRace', function(raceId)
                 if useDebug then
                     print('money', activeRaces[raceId].amount)
                 end
-                Player.Functions.RemoveMoney(Config.MoneyType, activeRaces[raceId].amount)
+                Player.Functions.RemoveMoney(Config.MoneyType, activeRaces[raceId].amount, "Head2Head")
             end
             if activeRaces[raceId].type == 'head2head' then
                 TriggerClientEvent('cw-head2head:client:raceCountdown', Player.PlayerData.source, activeRaces[raceId])
@@ -119,7 +123,7 @@ RegisterNetEvent('cw-head2head:server:joinRace', function(citizenId, racerName, 
     if activeRaces[raceId].started then
         TriggerClientEvent('QBCore:Notify', source, Lang:t("error.race_already_started"), "error")
     elseif activeRaces[raceId].amount > 0 and Player.PlayerData.money[Config.MoneyType] < activeRaces[raceId].amount then
-        TriggerClientEvent('QBCore:Notify', source, Lang:t("error.not_enough_money"), "error")        
+        TriggerClientEvent('QBCore:Notify', source, Lang:t("error.not_enough_money"), "error")
     else
         if useDebug then
             print('type: ', activeRaces[raceId].type)

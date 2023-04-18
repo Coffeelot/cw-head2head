@@ -243,7 +243,13 @@ RegisterNetEvent('cw-head2head:client:setupRace', function(data)
     if useDebug then
         print(citizenId, dump(startCoords))
     end
-    TriggerServerEvent('cw-head2head:server:setupRace', citizenId, racerName, startCoords, amount, 'head2head')
+    local finishCoords = nil
+    if GetFirstBlipInfoId( 8 ) ~= 0 then
+        local waypointBlip = GetFirstBlipInfoId( 8 ) 
+        local coord = Citizen.InvokeNative( 0xFA7C7F0AADF25D09, waypointBlip, Citizen.ResultAsVector( ) )
+        finishCoords = vector3(coord.x,coord.y,coord.z)
+    end
+    TriggerServerEvent('cw-head2head:server:setupRace', citizenId, racerName, startCoords, amount, 'head2head', finishCoords)
     handleHighBeams()
 end)
 
@@ -365,7 +371,7 @@ CreateThread(function()
 
         if currentRace ~= nil then
             if currentRace.started and not currentRace.finished then
-                local distanceToFinish = #(pos - currentRace.finishCoords)
+                local distanceToFinish = #(pos.xy - currentRace.finishCoords.xy)
                 if finishEntity == nil and not hasFinished and distanceToFinish < flareStartDistance then
                     DoPilePfx()
                 end
