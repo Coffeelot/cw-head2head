@@ -438,7 +438,9 @@ local function addRadialMenu()
 end
 
 local function removeRadialMenu()
-    exports['qb-radialmenu']:RemoveOption(radialMenu)
+    if radialMenu then
+        exports['qb-radialmenu']:RemoveOption(radialMenu)
+    end
     radialMenu = nil
 end
 
@@ -512,6 +514,8 @@ AddEventHandler('onResourceStop', function (resource)
         print('deleting', finishEntity)
         DeleteEntity(finishEntity)
     end
-    exports['qb-radialmenu']:RemoveOption(radialMenu)
+    if radialMenu then
+        exports['qb-radialmenu']:RemoveOption(radialMenu)
+    end
     radialMenu = nil
 end)

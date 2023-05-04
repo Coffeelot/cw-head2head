@@ -108,7 +108,7 @@ end
 local function setupRaceUI()
     CreateThread(function()
         while true do
-            if not hasFinished then
+            if not hasFinished and currentRace ~= nil then
                 currentTime = GetTimeDifference(GetCloudTimeAsInt(), startTime)
                 local timeToWin = Config.Outrun.TimeToOutrun
                 if role == 'cat' then
@@ -413,7 +413,9 @@ local function addRadialMenu()
 end
 
 local function removeRadialMenu()
-    exports['qb-radialmenu']:RemoveOption(radialMenu)
+    if radialMenu then
+        exports['qb-radialmenu']:RemoveOption(radialMenu)
+    end
     radialMenu = nil
 end
 
@@ -443,7 +445,6 @@ Citizen.CreateThread(function()
 	while true do
         Citizen.Wait(1000)					-- mandatory wait
         local ped = GetPlayerPed(-1)	-- get local ped
-
         if IsPedInAnyVehicle(ped, false) then
             if isJobValidated() then
                 local veh = GetVehiclePedIsIn(ped, false)
@@ -472,6 +473,8 @@ AddEventHandler('onResourceStop', function (resource)
          print('deleting', finishEntity)
          DeleteEntity(finishEntity)
      end
-     exports['qb-radialmenu']:RemoveOption(radialMenu)
+     if radialMenu then
+        exports['qb-radialmenu']:RemoveOption(radialMenu)
+    end
      radialMenu = nil
  end)
