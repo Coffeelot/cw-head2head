@@ -144,7 +144,7 @@ RegisterNetEvent('cw-head2head:server:outrunWinner', function(raceId, citizenId,
     TriggerClientEvent('cw-outrun:client:notifyFinish', opponentSource, Lang:t('info.loser'))
     if activeRaces[raceId].amount > 0 then
         local Player = QBCore.Functions.GetPlayerByCitizenId(citizenId)
-        Player.Functions.AddMoney(Config.MoneyType, activeRaces[raceId].amount*2)
+        Player.Functions.AddMoney(Config.MoneyType, activeRaces[raceId].amount*2, 'outrun winner')
     end
 end)
 
@@ -157,7 +157,7 @@ RegisterNetEvent('cw-head2head:server:finishRacer', function(raceId, citizenId, 
         TriggerClientEvent('cw-head2head:client:notifyFinish', source, Lang:t('info.winner'))
         if activeRaces[raceId].amount > 0 then
             local Player = QBCore.Functions.GetPlayerByCitizenId(citizenId)
-            Player.Functions.AddMoney(Config.MoneyType, activeRaces[raceId].amount*2)
+            Player.Functions.AddMoney(Config.MoneyType, activeRaces[raceId].amount*2, 'head2head winner')
         end
     else
         activeRaces[raceId].finished = true
@@ -169,10 +169,10 @@ QBCore.Functions.CreateCallback('cw-head2head:server:getPlayers', function(_, cb
     local players = GetPlayers()
     local playerIds = {}
     for index, player in ipairs(players) do
-        local playerData = QBCore.Functions.GetPlayer(tonumber(player)).PlayerData
+        local Player = QBCore.Functions.GetPlayer(tonumber(player))
+        local citizenid = Player.PlayerData.citizenid
         playerIds[#playerIds+1] = {
-            citizenid = playerData.citizenid,
-            name = playerData.name,
+            citizenid =citizenid,
             sourceplayer = player,
             id = player
         }
