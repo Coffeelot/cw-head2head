@@ -105,6 +105,62 @@ local function distanceToOpponent()
     return distance
 end
 
+local function finishRace()
+    currentRace = nil
+end
+
+local function handleMouse()
+    distance = distanceToOpponent()
+    if distance == 0 then
+        if winTimer == nil then
+            winTimer = GetCloudTimeAsInt()            
+        end
+        if not hasFinished and Config.Outrun.TimeToOutrun <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
+            hasFinished = true
+            TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
+        end
+    else
+        winTimer = nil
+    end
+end
+
+local function handleCat()
+    distance = distanceToOpponent()
+    if distance <= Config.Outrun.CatchDistance and distance ~= 0 then
+        if winTimer == nil then
+            winTimer = GetCloudTimeAsInt()            
+        end
+        if not hasFinished and Config.Outrun.TimeToCatch <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
+            hasFinished = true
+            TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
+        end
+    else
+        winTimer = nil
+    end
+end
+
+local function setupRace()
+    CreateThread(function()
+        while true do
+            local ped = PlayerPedId()
+            local pos = GetEntityCoords(ped)
+    
+            if currentRace ~= nil then
+                if currentRace.started and not currentRace.finished then
+                    if role == 'mouse' then
+                        handleMouse()
+                    else
+                        handleCat()
+                    end
+                end
+            else
+                break;
+            end
+            Wait(0)
+        end
+    end)
+end
+
 local function setupRaceUI()
     CreateThread(function()
         while true do
@@ -285,6 +341,7 @@ RegisterNetEvent('cw-outrun:client:raceCountdown', function(race)
         end
         if currentRace.raceId ~= nil then
             setupRaceUI()
+            setupRace()
             opponent = getOpponent()
             while Countdown ~= 0 do
                 if currentRace ~= nil then
@@ -310,60 +367,6 @@ RegisterNetEvent('cw-outrun:client:raceCountdown', function(race)
             QBCore.Functions.Notify(Lang:t("error.already_in_race"), 'error')
         end
     end)
-end)
-
-local function finishRace()
-    currentRace = nil
-end
-
-local function handleMouse()
-    distance = distanceToOpponent()
-    if distance == 0 then
-        if winTimer == nil then
-            winTimer = GetCloudTimeAsInt()            
-        end
-        if not hasFinished and Config.Outrun.TimeToOutrun <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
-            hasFinished = true
-            TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
-        end
-    else
-        winTimer = nil
-    end
-end
-
-local function handleCat()
-    distance = distanceToOpponent()
-    if distance <= Config.Outrun.CatchDistance and distance ~= 0 then
-        if winTimer == nil then
-            winTimer = GetCloudTimeAsInt()            
-        end
-        if not hasFinished and Config.Outrun.TimeToCatch <= GetTimeDifference(GetCloudTimeAsInt(), winTimer) then
-            hasFinished = true
-            TriggerServerEvent('cw-head2head:server:outrunWinner', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, opponentId, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
-        end
-    else
-        winTimer = nil
-    end
-end
-
-CreateThread(function()
-    while true do
-        local ped = PlayerPedId()
-        local pos = GetEntityCoords(ped)
-
-        if currentRace ~= nil then
-            if currentRace.started and not currentRace.finished then
-                if role == 'mouse' then
-                    handleMouse()
-                else
-                    handleCat()
-                end
-            end
-        else
-            Wait(1000)
-        end
-        Wait(0)
-    end
 end)
 
 local markers = {}
@@ -443,7 +446,7 @@ end
 Citizen.CreateThread(function()
 	local isInCar = false
 	while true do
-        Citizen.Wait(1000)					-- mandatory wait
+        Citizen.Wait(2000)				-- mandatory wait
         local ped = GetPlayerPed(-1)	-- get local ped
         if IsPedInAnyVehicle(ped, false) then
             if isJobValidated() then
@@ -477,4 +480,4 @@ AddEventHandler('onResourceStop', function (resource)
         exports['qb-radialmenu']:RemoveOption(radialMenu)
     end
      radialMenu = nil
- end)
+end)

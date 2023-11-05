@@ -16,6 +16,9 @@ local opponentId = nil
 local finishBlip = nil
 local PlayerJob = {}
 
+local finishParticle
+local finishEntity
+
 local function dump(o)
    if type(o) == 'table' then
    local s = '{ '
@@ -27,6 +30,12 @@ local function dump(o)
    else
    return tostring(o)
    end
+end
+
+local function finishRace()
+    currentRace = nil
+    RemoveBlip(finishBlip)
+    finishBlip = nil
 end
 
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function(JobInfo)
@@ -74,6 +83,34 @@ local function getOpponent()
     end
 end
 
+local function showNonLoopParticle(dict, particleName, coords, scale, time)
+    while not HasNamedPtfxAssetLoaded(dict) do
+        RequestNamedPtfxAsset(dict)
+        Wait(0)
+    end
+
+    UseParticleFxAssetNextCall(dict)
+
+    local particleHandle = StartParticleFxLoopedAtCoord(particleName, coords.x, coords.y, coords.z-0.5, 0.0, 0.0, 0.0,
+    scale, false, false, false)
+    SetParticleFxLoopedColour(particleHandle,0.0,0.0,1.0)
+    return particleHandle
+end
+
+local function DeletePile()
+    if DoesEntityExist(finishEntity) then
+        DeleteEntity(finishEntity)
+        finishEntity = nil
+    end
+end
+
+local function LoadModel(model)
+    while not HasModelLoaded(model) do
+        RequestModel(model)
+        Wait(10)
+    end
+end
+
 local function getPosition()
     local ply = GetPlayerPed(-1)
     local plyCoords = GetEntityCoords(ply, 0)    
@@ -90,6 +127,65 @@ local function getPosition()
         return '-'
     end
     return 2
+end
+
+local function handleFlare ()
+    -- QBCore.Functions.Notify('Lighting '..checkpoint, 'success')
+
+    local Size = 1.0
+    local finishParticle = showNonLoopParticle('core', 'exp_grd_flare',
+        currentRace.finishCoords, Size)
+
+    SetTimeout(Config.FlareTime, function()
+        StopParticleFxLooped(finishParticle, false)
+        particleHandle = nil
+        DeletePile()
+    end)
+end
+
+local function CreatePile()
+    ClearAreaOfObjects(currentRace.finishCoords.x, currentRace.finishCoords.y, currentRace.finishCoords.z, 50.0, 0)
+    LoadModel(Config.FinishModel)
+
+    local Obj = CreateObject(Config.FinishModel, currentRace.finishCoords.x, currentRace.finishCoords.y, currentRace.finishCoords.z, 0, 0, 0) -- CHANGE ONE OF THESE TO MAKE NETWORKED???
+    PlaceObjectOnGroundProperly(Obj)
+    -- FreezeEntityPosition(Obj, 1)
+    SetEntityAsMissionEntity(Obj, 1, 1)
+
+    return Obj
+end
+
+local function DoPilePfx()
+    handleFlare()
+    finishEntity = CreatePile()
+end
+
+local function setupRace()
+    CreateThread(function()
+        while true do
+            if currentRace ~= nil then
+                local ped = PlayerPedId()
+                local pos = GetEntityCoords(ped)
+                if currentRace.started and not currentRace.finished then
+                    local distanceToFinish = #(pos.xy - currentRace.finishCoords.xy)
+                    if finishEntity == nil and not hasFinished and distanceToFinish < flareStartDistance then
+                        DoPilePfx()
+                    end
+                    if not hasFinished and distanceToFinish < maxDistance then
+                        PlaySound(-1, "SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", 0, 0, 1)
+                        TriggerServerEvent('cw-head2head:server:finishRacer', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
+                        hasFinished = true
+                        Countdown = 5
+                        Wait(1000)
+                        finishRace()
+                    end
+                end
+            else
+                break;
+            end
+            Wait(0)
+        end
+    end)
 end
 
 local function setupRaceUI()
@@ -253,71 +349,6 @@ RegisterNetEvent('cw-head2head:client:setupRace', function(data)
     handleHighBeams()
 end)
 
-local function showNonLoopParticle(dict, particleName, coords, scale, time)
-    while not HasNamedPtfxAssetLoaded(dict) do
-        RequestNamedPtfxAsset(dict)
-        Wait(0)
-    end
-
-    UseParticleFxAssetNextCall(dict)
-
-    local particleHandle = StartParticleFxLoopedAtCoord(particleName, coords.x, coords.y, coords.z-0.5, 0.0, 0.0, 0.0,
-    scale, false, false, false)
-    SetParticleFxLoopedColour(particleHandle,0.0,0.0,1.0)
-    return particleHandle
-end
-
-local finishParticle
-local finishEntity
-
-local function DeletePile()
-    if DoesEntityExist(finishEntity) then
-        DeleteEntity(finishEntity)
-        finishEntity = nil
-    end
-end
-
-local function handleFlare ()
-    -- QBCore.Functions.Notify('Lighting '..checkpoint, 'success')
-
-    local Size = 1.0
-    local finishParticle = showNonLoopParticle('core', 'exp_grd_flare',
-        currentRace.finishCoords, Size)
-
-    SetTimeout(Config.FlareTime, function()
-        StopParticleFxLooped(finishParticle, false)
-        particleHandle = nil
-        DeletePile()
-    end)
-end
-
-
-
-local function LoadModel(model)
-    while not HasModelLoaded(model) do
-        RequestModel(model)
-        Wait(10)
-    end
-end
-
-local function CreatePile()
-    ClearAreaOfObjects(currentRace.finishCoords.x, currentRace.finishCoords.y, currentRace.finishCoords.z, 50.0, 0)
-    LoadModel(Config.FinishModel)
-
-    local Obj = CreateObject(Config.FinishModel, currentRace.finishCoords.x, currentRace.finishCoords.y, currentRace.finishCoords.z, 0, 0, 0) -- CHANGE ONE OF THESE TO MAKE NETWORKED???
-    PlaceObjectOnGroundProperly(Obj)
-    -- FreezeEntityPosition(Obj, 1)
-    SetEntityAsMissionEntity(Obj, 1, 1)
-
-    return Obj
-end
-
-
-local function DoPilePfx()
-    handleFlare()
-    finishEntity = CreatePile()
-end
-
 RegisterNetEvent('cw-head2head:client:raceCountdown', function(race)
     QBCore.Functions.TriggerCallback('cw-head2head:server:getPlayers', function(players)
         Players = players
@@ -329,6 +360,7 @@ RegisterNetEvent('cw-head2head:client:raceCountdown', function(race)
         if currentRace.raceId ~= nil then
             finishBlip = AddBlipForCoord(currentRace.finishCoords)
             setupRaceUI()
+            setupRace()
             opponent = getOpponent()
             SetNewWaypoint(currentRace.finishCoords.x, currentRace.finishCoords.y)
             while Countdown ~= 0 do
@@ -355,40 +387,6 @@ RegisterNetEvent('cw-head2head:client:raceCountdown', function(race)
             QBCore.Functions.Notify(Lang:t("error.already_in_race"), 'error')
         end
     end)
-end)
-
-local function finishRace()
-    currentRace = nil
-    RemoveBlip(finishBlip)
-    finishBlip = nil
-end
-
-CreateThread(function()
-    while true do
-
-        local ped = PlayerPedId()
-        local pos = GetEntityCoords(ped)
-
-        if currentRace ~= nil then
-            if currentRace.started and not currentRace.finished then
-                local distanceToFinish = #(pos.xy - currentRace.finishCoords.xy)
-                if finishEntity == nil and not hasFinished and distanceToFinish < flareStartDistance then
-                    DoPilePfx()
-                end
-                if not hasFinished and distanceToFinish < maxDistance then
-                    PlaySound(-1, "SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", 0, 0, 1)
-                    TriggerServerEvent('cw-head2head:server:finishRacer', currentRace.raceId, QBCore.Functions.GetPlayerData().citizenid, GetTimeDifference(GetCloudTimeAsInt(), startTime) )
-                    hasFinished = true
-                    Countdown = 5
-                    Wait(1000)
-                    finishRace()
-                end
-            end
-        else
-            Wait(1000)
-        end
-        Wait(0)
-    end
 end)
 
 local markers = {}
@@ -466,11 +464,10 @@ local function isJobValidated()
 end
 
 Citizen.CreateThread(function()
-	local isInCar = false
+    local isInCar = false
 	while true do
-        Citizen.Wait(1000)					-- mandatory wait
+        Wait(2000)					-- mandatory wait
         local ped = GetPlayerPed(-1)	-- get local ped
-
         if IsPedInAnyVehicle(ped, false) then
             if isJobValidated() then
                 local veh = GetVehiclePedIsIn(ped, false)
